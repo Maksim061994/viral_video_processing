@@ -1,0 +1,52 @@
+version: "3.7"
+
+services:
+  api_video_upload:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: api_video_upload:latest
+    container_name: api_video_upload
+    entrypoint: bash ./api.sh
+    ports:
+      - 3026:8000
+      - 3027:5555
+    restart: always
+    volumes:
+      - ./app:/opt/app
+#      - ./scripts:/opt/scripts
+      - ./gunicorn.conf.py:/opt/gunicorn.conf.py
+      - /opt/services/ui_nocobase/storage/uploads:/opt/uploads
+      - ./.env:/opt/.env
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks:
+      video_upload:
+        ipv4_address: 192.168.30.2
+        
+  api_video_upload_beat:
+    build:
+      context: .
+      dockerfile: Dockerfile.api
+    image: api_superset:latest
+    container_name: api_video_upload_beat
+    command: celery -A app.main_celery.app_celery beat -l debug
+    restart: always
+    volumes:
+      - ./app:/opt/app
+      - ./.env:/opt/.env
+    networks:
+      video_upload:
+        ipv4_address: 192.168.30.3
+
+networks:
+  video_upload:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 192.168.30.0/24

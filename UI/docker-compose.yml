@@ -1,0 +1,84 @@
+services:
+  ui_nocobase:
+    image: nocobase/nocobase:latest
+    container_name: ui_nocobase
+    env_file:
+      - .env
+    volumes:
+      - ./storage:/app/nocobase/storage
+    ports:
+      - "3025:3025"
+    init: true
+    
+  db_nocobase:
+    image: postgres_15.5
+    container_name: db_nocobase
+    hostname: db_nocobase
+    shm_size: '2gb'
+    restart: always 
+    environment:
+      - POSTGRES_DB=$DB_DATABASE
+      - POSTGRES_USER=$DB_USER
+      - POSTGRES_PASSWORD=$DB_PASSWORD
+      - PGDATA=$PGDATA
+    ports:
+      - 5432:5432
+    volumes:
+      - /dev/urandom:/dev/random   # Required to get non-blocking entropy source
+      - ./pgdata:/var/lib/postgresql/data/pgdata
+      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d
+    command: >
+     postgres
+       -c max_connections=500
+       -c superuser_reserved_connections=3
+       -c shared_buffers=4GB
+       -c work_mem=128MB
+       -c maintenance_work_mem=320MB
+       -c huge_pages=off
+       -c random_page_cost=1.25
+       -c effective_cache_size=11GB
+       -c effective_io_concurrency=100
+       -c log_destination=stderr
+       -c logging_collector=on
+       -c log_filename='postgresql-%G-%m.log'
+       -c log_truncate_on_rotation=off
+       -c log_rotation_age=10d
+       -c client_min_messages=warning
+       -c log_min_messages=warning
+       -c log_min_error_statement=error
+       -c log_line_prefix='%t %u@%r:%d [%p] '
+       -c log_min_duration_statement=200ms
+       -c log_timezone='Europe/Moscow'
+       -c temp_file_limit=10GB
+       -c lock_timeout=0
+       -c statement_timeout=6000s
+       -c idle_in_transaction_session_timeout=600s
+       -c shared_preload_libraries=pg_stat_statements,pg_trgm
+       -c pg_stat_statements.max=10000
+       -c pg_stat_statements.track=all
+       -c timezone='Europe/Moscow'
+       -c autovacuum=on
+       -c track_counts=on
+       -c track_activities=on
+       -c track_io_timing=on
+       -c track_functions=pl
+       -c track_wal_io_timing=on
+       -c password_encryption=md5
+       -c max_worker_processes=8
+       -c max_parallel_workers_per_gather=4
+       -c max_parallel_maintenance_workers=4
+       -c max_parallel_workers=8
+       -c parallel_leader_participation=on
+       -c min_wal_size=512MB
+       -c max_wal_size=2GB
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    deploy:
+      restart_policy:
+        condition: on-failure
+        delay: 8s
+        max_attempts: 5
