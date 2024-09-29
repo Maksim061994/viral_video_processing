@@ -18,6 +18,7 @@ services:
       - ./gunicorn.conf.py:/opt/gunicorn.conf.py
       - /opt/services/ui_nocobase/storage/uploads:/opt/uploads
       - ./.env:/opt/.env
+      - ./models:/opt/models
     deploy:
       resources:
         reservations:

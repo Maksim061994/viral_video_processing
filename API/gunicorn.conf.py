@@ -5,18 +5,18 @@ import multiprocessing
 bind = "0.0.0.0:8000"
 
 # -w
-workers = multiprocessing.cpu_count() * 1 + 2
-worker_connections = 1000
-threads = 1
+workers = 1 # multiprocessing.cpu_count() * 1 + 2
+worker_connections = 100
+# threads = 1
 max_requests = 3000
 
 # -t
-timeout = 600
+timeout = 6000
 
 # логирование
 accesslog = '-'
 
 # worker_class=uvicorn.workers.UvicornWorker
-debug = True
+debug = False
 logfile = '/var/log/gunicorn/debug.log'
 loglevel = 'debug'
